@@ -1,6 +1,5 @@
 # 🛡️ Hello guys, welcome to this THM *Avengers Hub* write-up!
 
-**happy hacking!**
 ---
 
 ## 🧭 Step 0 – Preparation
