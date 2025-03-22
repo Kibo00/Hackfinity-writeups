@@ -140,7 +140,7 @@ ssh -i mykey void@10.30.02.20
 🎉 You now have user access.
 
 ```bash
-cat ~/flag.txt
+cat /home/void/flag.txt
 ```
 
 ---
