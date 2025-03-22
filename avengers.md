@@ -253,12 +253,4 @@ cat /root/flag.txt
 
 ## ✅ Challenge Complete
 
-You've successfully:
-
-- Enumerated services
-- Cracked a ZIP and an MD5 hash
-- Exploited a file upload vulnerability
-- Used SSH key injection for privilege escalation
-- Loaded a malicious kernel module for root
-
 🔥 **Great job and happy hacking!**
