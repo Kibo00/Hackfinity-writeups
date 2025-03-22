@@ -31,13 +31,16 @@ Open port 80 hosts a web server. Visiting it shows a **"Site under maintenance"*
 
 ## 🧪 Step 3 – Directory Enumeration
 
-Use tools like `dirsearch`, `gobuster`, or `ffuf`. In our case:
+Now we’re going to try to discover hidden directories on the website, since the homepage doesn’t give us anything useful to work with.
 
+To do this, we can use tools like dirsearch, gobuster, or ffuf.
+In my case, I used dirsearch :
 ```bash
 python3 dirsearch.py -u http://10.30.02.20
 ```
 
 We discover a few directories. By exploring them, we find a suspicious file: `breakglass.zip`.
+By trying to open it we see that it ask us a password. To access its content, we need to crack the password.
 
 ---
 
