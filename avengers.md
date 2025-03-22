@@ -56,14 +56,11 @@ zip2john breakglass.zip > hash.txt
 
 This creates a `hash.txt` file that contains the ZIP’s password hash.
 
-Then, we use `john` (John the Ripper) to try to crack the password using a wordlist — here, we use the classic `rockyou.txt` list:
+Then, we use `john` (John the Ripper) to try to crack the password using a rockyou wordlist :
 
 ```bash
 john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
 ```
-
-
-## 🧾 Step 5 – Extracting and Decrypting the Admin Password
 
 Inside the ZIP, we find a file with an **MD5 hash** for the admin password. Try to decrypt it online (e.g., https://md5decrypt.net).
 
@@ -71,7 +68,7 @@ Inside the ZIP, we find a file with an **MD5 hash** for the admin password. Try 
 
 ---
 
-## 🧑‍💻 Step 6 – Accessing the Admin Interface (WBCE CMS)
+## 🧑‍💻 Step 5 – Accessing the Admin Interface (WBCE CMS)
 
 The CMS is **WBCE 1.6.2**. Searching online shows an exploit using `.inc` file upload:
 
@@ -81,7 +78,7 @@ https://www.exploit-db.com/exploits/52039
 
 ---
 
-## 🐚 Step 7 – Reverse Shell via WBCE CMS Exploit
+## 🐚 Step 6 – Reverse Shell via WBCE CMS Exploit
 
 Generate a PHP reverse shell in `.inc` format:
 
@@ -101,7 +98,7 @@ Upload `shell.inc` to `/media/` in the CMS and trigger it in the browser.
 
 ---
 
-## 🧍‍♂️ Step 8 – Privilege Escalation to User
+## 🧍‍♂️ Step 7 – Privilege Escalation to User
 
 Check who you are:
 
@@ -119,7 +116,7 @@ Suppose we find the user `void` and the folder `/home/void/.ssh/` is **writable*
 
 ---
 
-## 🔑 Step 9 – SSH Key Injection
+## 🔑 Step 8 – SSH Key Injection
 
 On your machine, generate a key:
 
@@ -148,7 +145,7 @@ cat /home/void/flag.txt
 
 ---
 
-## 👑 Step 10 – Escalating to Root with a Kernel Module
+## 👑 Step 9 – Escalating to Root with a Kernel Module
 
 Check what we can do with sudo:
 
@@ -162,7 +159,7 @@ We see permission to run `/sbin/insmod`, which loads a `.ko` kernel module.
 
 ---
 
-## 🛠️ Step 11 – Creating the Kernel Module on the Target
+## 🛠️ Step 10 – Creating the Kernel Module on the Target
 
 ### On the target, create `cyberavengers.c`:
 
@@ -222,7 +219,7 @@ clean:
 
 ---
 
-## 🧨 Step 12 – Compile and Load the Module
+## 🧨 Step 11 – Compile and Load the Module
 
 ### Compile on the target:
 
