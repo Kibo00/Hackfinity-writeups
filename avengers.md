@@ -25,7 +25,7 @@ nmap -sV 10.30.02.20
 
 ## 🌐 Step 2 – Exploring the Web Server
 
-Open port 80 hosts a web server. Visiting it shows a **"Site under maintenance"** message. This usually means there might be hidden directories.
+We found open port 80 hosts a web server. Visiting it shows a **"Site under maintenance"** message. This usually means there might be hidden directories.
 
 ---
 
@@ -62,7 +62,7 @@ Then, we use `john` (John the Ripper) to try to crack the password using a rocky
 john --wordlist=/usr/share/wordlists/rockyou.txt hash.txt
 ```
 
-Inside the ZIP, we find a file with an **MD5 hash** for the admin password. Try to decrypt it online (e.g., https://md5decrypt.net).
+Inside the ZIP, we find a file with an **MD5 hash** for the admin password. We will try to decrypt it online (e.g., https://md5decrypt.net).
 
 🎉 We recover the admin password.
 
@@ -70,7 +70,7 @@ Inside the ZIP, we find a file with an **MD5 hash** for the admin password. Try 
 
 ## 🧑‍💻 Step 5 – Accessing the Admin Interface (WBCE CMS)
 
-The CMS is **WBCE 1.6.2**. Searching online shows an exploit using `.inc` file upload:
+The Admin interface is a CMS **WBCE 1.6.2**. Searching online shows an exploit using `.inc` file upload:
 
 https://www.exploit-db.com/exploits/52039
 
